@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSP - Optimización de Ruta</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #001f3f, #003366, #0f0f0f);
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 40px;
+            border-radius: 10px;
+            background: rgba(30, 30, 30, 0.9);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        button {
+            background: #003366;
+            color: white;
+            font-size: 16px;
+            padding: 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #001f3f;
+            transform: scale(1.05);
+        }
+        input {
+            background: rgba(255, 255, 255, 0.8);
+            color: #001f3f;
+            font-size: 16px;
+            padding: 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+        }
+        h1, h2, h3 {
+            color: #d9d9d9;
+            margin: 20px 0;
+        }
+    </style>
+    <script>
+        function agregarCiudad() {
+            const ciudad = document.getElementById("ciudad").value.trim();
+            const latitud = document.getElementById("latitud").value.trim();
+            const longitud = document.getElementById("longitud").value.trim();
+
+            if (ciudad && latitud && longitud) {
+                const lista = document.getElementById("listaCiudades");
+                lista.innerHTML += `<li class="list-group-item bg-dark text-white">${ciudad}: (${latitud}, ${longitud})</li>`;
+
+                document.getElementById("ciudad").value = "";
+                document.getElementById("latitud").value = "";
+                document.getElementById("longitud").value = "";
+            }
+        }
+
+        function calcularRuta() {
+            const ciudades = [];
+            document.querySelectorAll("#listaCiudades li").forEach(item => {
+                const texto = item.textContent.split(": ");
+                const nombre = texto[0];
+                const coords = texto[1].replace("(", "").replace(")", "").split(", ");
+                ciudades.push({ nombre: nombre, latitud: parseFloat(coords[0]), longitud: parseFloat(coords[1]) });
+            });
+
+            const temperatura = parseFloat(document.getElementById("temperatura").value);
+            const tasaEnfriamiento = parseFloat(document.getElementById("tasa_enfriamiento").value);
+
+            fetch('/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ciudades: ciudades, temperatura: temperatura, tasa_enfriamiento: tasaEnfriamiento })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("resultado").innerHTML = `
+                    <div class="alert alert-dark">
+                        <h4 class="text-warning">Ruta Óptima:</h4>
+                        <p>${data.ruta.join(" → ")}</p>
+                        <h4 class="text-info">Distancia Total:</h4>
+                        <p class="fw-bold text-success">${data.distancia.toFixed(2)} unidades</p>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="display-5 text-warning">Optimización de Ruta TSP</h1>
+        <p class="lead text-info">Ingresa tus ciudades y parámetros para encontrar la mejor ruta.</p>
+
+        <div class="mb-3">
+            <input type="text" id="ciudad" class="form-control mb-2" placeholder="Nombre de la ciudad">
+            <input type="text" id="latitud" class="form-control mb-2" placeholder="Latitud">
+            <input type="text" id="longitud" class="form-control mb-2" placeholder="Longitud">
+            <button onclick="agregarCiudad()">Agregar Ciudad</button>
+        </div>
+
+        <h4 class="text-danger">Parámetros de Simulated Annealing</h4>
+        <input type="number" id="temperatura" class="form-control mb-2" placeholder="Temperatura inicial (Ej. 20)">
+        <input type="number" id="tasa_enfriamiento" class="form-control mb-2" placeholder="Tasa de enfriamiento (Ej. 0.005)">
+
+        <ul id="listaCiudades" class="list-group mb-3"></ul>
+        <button onclick="calcularRuta()">Calcular Ruta Óptima</button>
+        <div id="resultado" class="mt-4"></div>
+    </div>
+</body>
+</html>
